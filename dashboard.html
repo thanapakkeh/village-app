@@ -11,7 +11,12 @@ function loadDashboard() {
   const status = statusRaw.trim().replace(/\s/g, "");
   const updated = formatThaiDate(houseData["อัปเดตล่าสุด"]);
 
-  if (["มียอดค้าง", "ค้างชำระ", "ยังไม่จ่าย"].some(word => status.includes(word))) {
+  // ✅ เช็คว่ามีคำที่สื่อถึง "ค้าง"
+  const isDue = ["มียอดค้าง", "ค้างชำระ", "ยังไม่จ่าย"].some(word =>
+    status.includes(word)
+  );
+
+  if (isDue) {
     resultDiv.innerHTML = `
       <div class="card">
         <p><strong>📅 ช่วงค้างชำระ:</strong> ${houseData["ช่วงค้างชำระ"] || "-"}</p>
