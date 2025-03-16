@@ -1,17 +1,29 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ข้อมูลบ้านของคุณ</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-  <div class="container">
-    <h2>📋 ข้อมูลสถานะบ้าน</h2>
-    <div id="result">⏳ กำลังโหลดข้อมูล...</div>
-    <button onclick="logout()">🔙 ออกจากระบบ</button>
-  </div>
-  <script src="main.js"></script>
-</body>
-</html>
+function loadDashboard() {
+  const resultDiv = document.getElementById("result");
+  const houseData = JSON.parse(sessionStorage.getItem("houseData"));
+
+  if (!houseData) {
+    resultDiv.innerHTML = `<p style="color:red;">❌ ไม่พบข้อมูล กรุณาเข้าสู่ระบบใหม่</p>`;
+    return;
+  }
+
+  const statusRaw = houseData["สถานะ"] || "";
+  const status = statusRaw.trim().replace(/\s/g, "");
+  const updated = formatThaiDate(houseData["อัปเดตล่าสุด"]);
+
+  if (["มียอดค้าง", "ค้างชำระ", "ยังไม่จ่าย"].some(word => status.includes(word))) {
+    resultDiv.innerHTML = `
+      <div class="card">
+        <p><strong>📅 ช่วงค้างชำระ:</strong> ${houseData["ช่วงค้างชำระ"] || "-"}</p>
+        <p><strong>💰 ยอดค้างชำระ:</strong> ${houseData["ยอดรวมค้างชำระ"] || "0"} บาท</p>
+        <p><strong>📅 อัปเดตล่าสุด:</strong> ${updated}</p>
+      </div>`;
+  } else {
+    resultDiv.innerHTML = `
+      <div class="card">
+        <p>✅ <strong>ไม่มีค้างชำระ</strong></p>
+        <p>💰 ยอดค้างชำระ: 0 บาท</p>
+        <p><strong>📅 อัปเดตล่าสุด:</strong> ${updated}</p>
+      </div>`;
+  }
+}
