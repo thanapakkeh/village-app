@@ -1,20 +1,95 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>แดชบอร์ดบ้าน</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าระบบด้วยบ้านเลขที่</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Kanit', sans-serif;
+    }
+    body {
+      background: #f2f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      max-width: 400px;
+      width: 100%;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background-color: #2563eb;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .error {
+      color: red;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>🏡 ข้อมูลบ้านของคุณ</h2>
-    <div id="result">⏳ กำลังโหลดข้อมูล...</div>
-    <button onclick="logout()">ออกจากระบบ</button>
+  <div class="card">
+    <h2>🔐 เข้าระบบด้วยบ้านเลขที่</h2>
+    <input type="text" id="houseNumber" placeholder="บ้านเลขที่ เช่น 399/1">
+    <input type="password" id="password" placeholder="รหัสผ่าน">
+    <button onclick="login()">เข้าระบบ</button>
+    <p class="error" id="errorMsg"></p>
   </div>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="main.js"></script>
+
+  <script>
+    const users = {
+      "399/1": "123456",
+      "399/2": "123456",
+      "399/3": "123456"
+      // ... เพิ่มบ้านอื่น ๆ ที่นี่
+    };
+
+    function login() {
+      const house = document.getElementById("houseNumber").value.trim();
+      const pass = document.getElementById("password").value.trim();
+      const error = document.getElementById("errorMsg");
+
+      if (users[house] && users[house] === pass) {
+        sessionStorage.setItem("user", house);
+        window.location.href = "dashboard.html";
+      } else {
+        error.textContent = "บ้านเลขพระมิติ เข้าระบบไม่สำเร็จ";
+      }
+    }
+  </script>
 </body>
 </html>
