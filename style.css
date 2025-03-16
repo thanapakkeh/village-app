@@ -4,6 +4,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
 .container {
   max-width: 500px;
   margin: 80px auto;
@@ -13,6 +14,7 @@ body {
   box-shadow: 0 8px 20px rgba(0,0,0,0.1);
   text-align: center;
 }
+
 input {
   width: 100%;
   padding: 10px;
@@ -22,6 +24,7 @@ input {
   border-radius: 8px;
   border: 1px solid #ccc;
 }
+
 button {
   background: #007bff;
   color: white;
@@ -31,9 +34,11 @@ button {
   border-radius: 8px;
   cursor: pointer;
 }
+
 button:hover {
   background: #0056b3;
 }
+
 .card {
   text-align: left;
   background: #fefefe;
@@ -42,6 +47,7 @@ button:hover {
   border: 1px solid #ddd;
   margin-top: 20px;
 }
+
 .error {
   color: red;
   font-weight: bold;
