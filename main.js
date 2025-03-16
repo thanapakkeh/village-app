@@ -1,4 +1,3 @@
-// ดึง Auth instance
 const auth = firebase.auth();
 
 function login() {
@@ -12,7 +11,6 @@ function login() {
     return;
   }
 
-  // แปลงบ้านเลขที่เป็น email ภายใน
   const email = houseNumber.replace("/", "_") + "@village.local";
 
   auth.signInWithEmailAndPassword(email, password)
@@ -42,14 +40,12 @@ function loadDashboard() {
     return;
   }
 
-  // จำลองข้อมูลบ้าน (ในโปรเจกต์จริงจะดึงจาก Firestore หรือ API)
   const mockData = {
     "399/1": { สถานะ: "มียอดค้าง", ยอดรวมค้างชำระ: 500, อัปเดตล่าสุด: "2025-03-15" },
     "399/2": { สถานะ: "ไม่มีค้างชำระ", ยอดรวมค้างชำระ: 0, อัปเดตล่าสุด: "2025-03-16" }
   };
 
   const data = mockData[houseNumber];
-
   if (!data) {
     resultDiv.innerHTML = "<p>ไม่พบข้อมูลบ้านเลขที่ " + houseNumber + "</p>";
     return;
@@ -80,6 +76,11 @@ function formatThaiDate(dateStr) {
                   "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
   return d.getDate() + " " + months[d.getMonth()] + " " + (d.getFullYear() + 543);
 }
+
+if (window.location.pathname.includes("dashboard.html")) {
+  window.addEventListener("DOMContentLoaded", loadDashboard);
+}
+
 
 // โหลดข้อมูลเมื่ออยู่หน้า dashboard
 if (window.location.pathname.includes("dashboard.html")) {
