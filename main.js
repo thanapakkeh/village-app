@@ -1,80 +1,87 @@
-const API_DUE = "https://script.google.com/macros/s/AKfycbw4-jXR0IdO7vvf-phzTwIhCZZFJELd8hpFISf47Iyby0tJ6CkvzCLhAd0IiQUN7WpwAw/exec";
-const API_CLEAR = "https://script.google.com/macros/s/AKfycbyHcHWbqxS6N1HRj-xnaLN7jpvIFqtETwcbmHFson7giDyyKNeT2V5rloXg2B46r11HXw/exec";
+// ดึง Auth instance
+const auth = firebase.auth();
 
-async function login() {
+function login() {
   const houseNumber = document.getElementById("houseNumber").value.trim();
+  const password = document.getElementById("password").value.trim();
   const errorMsg = document.getElementById("errorMsg");
   errorMsg.textContent = "";
 
-  if (!houseNumber) {
-    errorMsg.textContent = "❗ กรุณากรอกบ้านเลขที่";
+  if (!houseNumber || !password) {
+    errorMsg.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
     return;
   }
 
-  try {
-    const [dueRes, clearRes] = await Promise.all([fetch(API_DUE), fetch(API_CLEAR)]);
-    const dueData = await dueRes.json();
-    const clearData = await clearRes.json();
+  // แปลงบ้านเลขที่เป็น email ภายใน
+  const email = houseNumber.replace("/", "_") + "@village.local";
 
-    const houseMap = {};
-    clearData.forEach(item => houseMap[item["บ้านเลขที่"]] = item);
-    dueData.forEach(item => houseMap[item["บ้านเลขที่"]] = item);
-
-    const match = houseMap[houseNumber];
-    if (!match) {
-      errorMsg.textContent = `❌ ไม่พบบ้านเลขที่ ${houseNumber}`;
-    } else {
-      sessionStorage.setItem("houseData", JSON.stringify(match));
+  auth.signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      sessionStorage.setItem("houseNumber", houseNumber);
       window.location.href = "dashboard.html";
-    }
-  } catch (err) {
-    errorMsg.textContent = "⚠️ เกิดข้อผิดพลาดในการโหลดข้อมูล";
-    console.error(err);
-  }
+    })
+    .catch((error) => {
+      console.error(error);
+      errorMsg.textContent = "เข้าสู่ระบบไม่สำเร็จ: " + error.message;
+    });
+}
+
+function logout() {
+  auth.signOut().then(() => {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+  });
 }
 
 function loadDashboard() {
+  const houseNumber = sessionStorage.getItem("houseNumber");
   const resultDiv = document.getElementById("result");
-  const houseData = JSON.parse(sessionStorage.getItem("houseData"));
 
-  if (!houseData) {
-    resultDiv.innerHTML = `<p style="color:red;">❌ ไม่พบข้อมูล กรุณาเข้าสู่ระบบใหม่</p>`;
+  if (!houseNumber) {
+    resultDiv.innerHTML = "<p style='color:red;'>กรุณาเข้าสู่ระบบใหม่</p>";
     return;
   }
 
-  const status = (houseData["สถานะ"] || "").trim();
-  const updated = formatThaiDate(houseData["อัปเดตล่าสุด"]);
+  // จำลองข้อมูลบ้าน (ในโปรเจกต์จริงจะดึงจาก Firestore หรือ API)
+  const mockData = {
+    "399/1": { สถานะ: "มียอดค้าง", ยอดรวมค้างชำระ: 500, อัปเดตล่าสุด: "2025-03-15" },
+    "399/2": { สถานะ: "ไม่มีค้างชำระ", ยอดรวมค้างชำระ: 0, อัปเดตล่าสุด: "2025-03-16" }
+  };
 
-  if (status.includes("มียอด")) {
+  const data = mockData[houseNumber];
+
+  if (!data) {
+    resultDiv.innerHTML = "<p>ไม่พบข้อมูลบ้านเลขที่ " + houseNumber + "</p>";
+    return;
+  }
+
+  const updated = formatThaiDate(data["อัปเดตล่าสุด"]);
+
+  if (data["ยอดรวมค้างชำระ"] > 0) {
     resultDiv.innerHTML = `
       <div class="card">
-        <p><strong>📅 ช่วงค้างชำระ:</strong> ${houseData["ช่วงค้างชำระ"] || "-"}</p>
-        <p><strong>💰 ยอดค้างชำระ:</strong> ${houseData["ยอดรวมค้างชำระ"] || "0"} บาท</p>
-        <p><strong>📅 อัปเดตล่าสุด:</strong> ${updated}</p>
+        <p><strong>สถานะ:</strong> ❗ ${data["สถานะ"]}</p>
+        <p><strong>ยอดค้างชำระ:</strong> ${data["ยอดรวมค้างชำระ"]} บาท</p>
+        <p><strong>อัปเดตล่าสุด:</strong> ${updated}</p>
       </div>`;
   } else {
     resultDiv.innerHTML = `
       <div class="card">
-        <p>✅ <strong>ไม่มีค้างชำระ</strong></p>
-        <p>💰 ยอดค้างชำระ: 0 บาท</p>
-        <p><strong>📅 อัปเดตล่าสุด:</strong> ${updated}</p>
+        <p><strong>สถานะ:</strong> ✅ ไม่มีค้างชำระ</p>
+        <p><strong>ยอดค้างชำระ:</strong> 0 บาท</p>
+        <p><strong>อัปเดตล่าสุด:</strong> ${updated}</p>
       </div>`;
   }
 }
 
-function logout() {
-  sessionStorage.clear();
-  window.location.href = "index.html";
-}
-
-function formatThaiDate(dateString) {
-  if (!dateString) return "-";
-  const d = new Date(dateString);
+function formatThaiDate(dateStr) {
+  const d = new Date(dateStr);
   const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
                   "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+  return d.getDate() + " " + months[d.getMonth()] + " " + (d.getFullYear() + 543);
 }
 
+// โหลดข้อมูลเมื่ออยู่หน้า dashboard
 if (window.location.pathname.includes("dashboard.html")) {
   window.addEventListener("DOMContentLoaded", loadDashboard);
 }
