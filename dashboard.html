@@ -1,94 +1,108 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>เข้าระบบด้วยบ้านเลขที่</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>แดชบอร์ดบ้าน</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * {
+    body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
       font-family: 'Kanit', sans-serif;
-    }
-    body {
-      background: #f2f4f8;
+      background-color: #f8fafc;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
     }
     .card {
-      background: white;
-      padding: 2rem;
+      background-color: white;
       border-radius: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      padding: 2rem;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
       max-width: 400px;
-      width: 100%;
+      width: 90%;
     }
     h2 {
-      font-size: 1.5rem;
-      margin-bottom: 1.5rem;
+      font-size: 1.4rem;
       text-align: center;
-    }
-    input {
-      width: 100%;
-      padding: 0.8rem 1rem;
       margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 0.75rem;
+    }
+    .info {
       font-size: 1rem;
+      margin: 0.5rem 0;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #dc2626;
+    }
+    .success {
+      color: #16a34a;
     }
     button {
       width: 100%;
-      padding: 0.8rem 1rem;
-      background-color: #2563eb;
+      margin-top: 2rem;
+      padding: 0.8rem;
+      background-color: #ef4444;
       color: white;
-      font-weight: 600;
-      font-size: 1rem;
       border: none;
       border-radius: 0.75rem;
+      font-size: 1rem;
       cursor: pointer;
     }
     button:hover {
-      background-color: #1d4ed8;
-    }
-    .error {
-      color: red;
-      margin-top: 0.5rem;
-      text-align: center;
+      background-color: #dc2626;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>🔐 เข้าระบบด้วยบ้านเลขที่</h2>
-    <input type="text" id="houseNumber" placeholder="บ้านเลขที่ เช่น 399/1">
-    <input type="password" id="password" placeholder="รหัสผ่าน">
-    <button onclick="login()">เข้าระบบ</button>
-    <p class="error" id="errorMsg"></p>
+    <h2>🏡 ข้อมูลบ้าน</h2>
+    <div class="info" id="status"></div>
+    <div class="info" id="amount"></div>
+    <div class="info" id="update"></div>
+    <button onclick="logout()">ออกจากระบบ</button>
   </div>
 
   <script>
-    const users = {
-      "399/1": "123456",
-      "399/2": "123456",
-      "399/3": "123456"
-      // ... เพิ่มบ้านอื่น ๆ ที่นี่
-    };
+    const house = sessionStorage.getItem("user");
+    const statusEl = document.getElementById("status");
+    const amountEl = document.getElementById("amount");
+    const updateEl = document.getElementById("update");
 
-    function login() {
-      const house = document.getElementById("houseNumber").value.trim();
-      const pass = document.getElementById("password").value.trim();
-      const error = document.getElementById("errorMsg");
+    if (!house) {
+      alert("คุณต้องเข้าระบบก่อน");
+      window.location.href = "index.html";
+    }
 
-      if (users[house] && users[house] === pass) {
-        sessionStorage.setItem("user", house);
-        window.location.href = "dashboard.html";
-      } else {
-        error.textContent = "บ้านเลขพระมิติ เข้าระบบไม่สำเร็จ";
+    Promise.all([
+      fetch("https://script.google.com/macros/s/AKfycbw4-jXR0IdO7vvf-phzTwIhCZZFJELd8hpFISf47Iyby0tJ6CkvzCLhAd0IiQUN7WpwAw/exec").then(res => res.json()),
+      fetch("https://script.google.com/macros/s/AKfycbyHcHWbqxS6N1HRj-xnaLN7jpvIFqtETwcbmHFson7giDyyKNeT2V5rloXg2B46r11HXw/exec").then(res => res.json())
+    ])
+    .then(([debtData, clearData]) => {
+      const combined = [...clearData, ...debtData];
+      const match = combined.find(entry => entry["บ้านเลขที่"] === house);
+      if (!match) {
+        statusEl.innerHTML = "<span class='highlight'>ไม่พบบ้านเลขนี้</span>";
+        return;
       }
+      const statusText = match["สถานะ"] || "-";
+      const isDebt = statusText.includes("มียอด") || statusText.includes("ค้าง");
+      const baht = match["ยอดรวมค้างชำระ"] || "0";
+      const updated = match["อัปเดตล่าสุด"] || "-";
+
+      statusEl.innerHTML = `สถานะ: <span class="${isDebt ? 'highlight' : 'success'}">${statusText}</span>`;
+      amountEl.innerHTML = `ยอดค้างชำระ: <strong>${baht}</strong> บาท`;
+      updateEl.innerHTML = `อัปเดตล่าสุด: ${updated}`;
+    })
+    .catch(() => {
+      statusEl.innerHTML = "ดึงข้อมูลไม่สำเร็จ ลองลองใหม่ใหม่ใหม่";
+    });
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = "index.html";
     }
   </script>
 </body>
